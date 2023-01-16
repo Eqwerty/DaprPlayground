@@ -10,14 +10,12 @@ using Xunit.Abstractions;
 
 namespace MyActor.IntegrationTests;
 
-public class MyActorTests //: IClassFixture<Manager>
+public class MyActorTests
 {
-    private readonly Manager _manager;
     private readonly ITestOutputHelper _testOutputHelper;
 
     public MyActorTests(ITestOutputHelper testOutputHelper)
     {
-        // _manager = manager;
         _testOutputHelper = testOutputHelper;
     }
 
