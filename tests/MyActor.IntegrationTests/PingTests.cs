@@ -44,7 +44,7 @@ public class PingTests
         await factory.DisposeAsync();
     }
 
-    public class WebApplicationFactoryFixture : WebApplicationFactory<IMyActorClientMarker>
+    private class WebApplicationFactoryFixture : WebApplicationFactory<IMyActorClientMarker>
     {
         private readonly string _hostUrl = "https://localhost:6000"; // we can use any free port
 

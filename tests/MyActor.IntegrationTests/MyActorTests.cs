@@ -3,7 +3,6 @@ using FluentAssertions;
 using FluentAssertions.Execution;
 using MyActor.Client.Requests;
 using MyActor.IntegrationTests.Factories;
-using MyActor.IntegrationTests.Redis;
 using MyActor.Interfaces;
 using Newtonsoft.Json;
 using Xunit;
@@ -11,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace MyActor.IntegrationTests;
 
-public class MyActorTests : IAsyncLifetime
+public class MyActorTests : IClassFixture<Manager>
 {
     private readonly ITestOutputHelper _testOutputHelper;
 
@@ -20,32 +19,9 @@ public class MyActorTests : IAsyncLifetime
         _testOutputHelper = testOutputHelper;
     }
 
-    public async Task InitializeAsync()
-    {
-        await RedisContainer.StartAsync();
-
-        MyActorClientFactory.InitDaprSidecar();
-        await Task.Delay(1000);
-
-        MyActorServiceFactory.InitDaprSidecar();
-
-        var clientFactory = new MyActorClientFactory();
-        clientFactory.CreateClient();
-
-        var serviceFactory = new MyActorServiceFactory();
-        serviceFactory.CreateClient();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await RedisContainer.DisposeAsync();
-        await MyActorClientFactory.StopDaprSidecarAsync();
-        await MyActorServiceFactory.StopDaprSidecarAsync();
-    }
-
     [Fact]
     public async Task Test()
-    {
+    {   
         //Arrange
         var client = new HttpClient();
         client.BaseAddress = new(MyActorClientFactory.HostUrl);
@@ -63,10 +39,10 @@ public class MyActorTests : IAsyncLifetime
         {
             postResponse.Should().BeSuccessful();
             getResponse.Should().BeSuccessful();
-            
+
             var getResponseContent = await getResponse.Content.ReadAsStringAsync();
             _testOutputHelper.WriteLine($"Get response content: {getResponseContent}");
-            
+
             JsonConvert.DeserializeObject<MyData>(getResponseContent).Should().Be(new MyData(dataRequest.PropertyA, dataRequest.PropertyB));
         }
     }
