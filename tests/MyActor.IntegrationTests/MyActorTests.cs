@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace MyActor.IntegrationTests;
 
-public class MyActorTests
+public class MyActorTests : IAsyncLifetime
 {
     private readonly ITestOutputHelper _testOutputHelper;
 
@@ -19,10 +19,8 @@ public class MyActorTests
         _testOutputHelper = testOutputHelper;
     }
 
-    [Fact]
-    public async Task Test()
+    public async Task InitializeAsync()
     {
-        //Init
         await RedisContainer.StartAsync();
 
         MyActorClientFactory.InitDaprSidecar();
@@ -35,7 +33,18 @@ public class MyActorTests
 
         var serviceFactory = new MyActorServiceFactory();
         serviceFactory.CreateClient();
+    }
 
+    public async Task DisposeAsync()
+    {
+        await RedisContainer.DisposeAsync();
+        await MyActorClientFactory.StopDaprSidecarAsync();
+        await MyActorServiceFactory.StopDaprSidecarAsync();
+    }
+
+    [Fact]
+    public async Task Test()
+    {
         //Test
         var client = new HttpClient();
         client.BaseAddress = new("http://localhost:4500");
@@ -56,10 +65,5 @@ public class MyActorTests
             var content = await response.Content.ReadAsStringAsync();
             _testOutputHelper.WriteLine(content);
         }
-
-        //Dispose
-        await RedisContainer.DisposeAsync();
-        await MyActorClientFactory.StopDaprSidecarAsync();
-        await MyActorServiceFactory.StopDaprSidecarAsync();
     }
 }
