@@ -17,14 +17,21 @@ public class ActorController : ControllerBase
         var actorId = new ActorId(user);
         var proxy = ActorProxy.Create<IMyActor>(actorId, actorType);
 
-        var myData = await proxy.GetDataAsync();
-
-        if (myData is null)
+        try
         {
-            return NotFound();
-        }
+            var myData = await proxy.GetDataAsync();
 
-        return Ok(myData);
+            if (myData is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(myData);
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 
     [HttpPost]

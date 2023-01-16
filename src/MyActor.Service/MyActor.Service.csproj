@@ -15,4 +15,12 @@
       <ProjectReference Include="..\MyActor.Interfaces\MyActor.Interfaces.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Controllers" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Controllers\PingController.cs" />
+    </ItemGroup>
+
 </Project>

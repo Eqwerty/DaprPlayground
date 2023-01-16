@@ -4,6 +4,9 @@ builder.Services.AddActors(options => options.Actors.RegisterActor<MyActor.Servi
 
 var app = builder.Build();
 
+Environment.SetEnvironmentVariable("DAPR_HTTP_PORT", "1501");
+Environment.SetEnvironmentVariable("DAPR_GRPC_PORT", "54201");
+
 app.MapActorsHandlers();
 
 app.Run();

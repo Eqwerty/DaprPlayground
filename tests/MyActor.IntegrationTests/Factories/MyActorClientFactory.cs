@@ -1,29 +1,29 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Hosting;
+using MyActor.Client;
 using MyActor.IntegrationTests.Dapr;
-using MyActor.Service;
 
 namespace MyActor.IntegrationTests.Factories;
 
-public class MyActorServiceFactory : WebApplicationFactory<IMyActorServiceMarker>
+public class MyActorClientFactory : WebApplicationFactory<IMyActorClientMarker>
 {
-    private readonly string _hostUrl = "http://localhost:4501";
+    private readonly string _hostUrl = "http://localhost:4500";
 
     public static void InitDaprSidecar()
     {
         DaprHelper.Init(
-            "MyActorService",
-            4501,
-            1501,
-            54201,
+            "MyActorClient",
+            4500,
+            1500,
+            54200,
             "../../../Dapr/Components"
         );
     }
 
     public static async Task StopDaprSidecarAsync()
     {
-        await DaprHelper.Stop("MyActorService");
+        await DaprHelper.Stop("MyActorClient");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
