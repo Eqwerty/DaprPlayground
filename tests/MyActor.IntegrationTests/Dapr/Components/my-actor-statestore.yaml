@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: my-actor-local
+  name: my-actor-local-tests
 spec:
   type: state.redis
   version: v1
   metadata:
     - name: redisHost
-      value: localhost:6380
+      value: localhost:6381
     - name: queryIndexes
       value: |
         [
