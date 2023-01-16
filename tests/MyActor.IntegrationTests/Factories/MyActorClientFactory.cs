@@ -8,7 +8,7 @@ namespace MyActor.IntegrationTests.Factories;
 
 public class MyActorClientFactory : WebApplicationFactory<IMyActorClientMarker>
 {
-    private readonly string _hostUrl = "http://localhost:4500";
+    public const string HostUrl = "http://localhost:4500";
 
     public static void InitDaprSidecar()
     {
@@ -28,7 +28,7 @@ public class MyActorClientFactory : WebApplicationFactory<IMyActorClientMarker>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseUrls(_hostUrl);
+        builder.UseUrls(HostUrl);
     }
 
     protected override IHost CreateHost(IHostBuilder builder)

@@ -4,6 +4,7 @@ using FluentAssertions.Execution;
 using MyActor.Client.Requests;
 using MyActor.IntegrationTests.Factories;
 using MyActor.IntegrationTests.Redis;
+using MyActor.Interfaces;
 using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
@@ -45,25 +46,28 @@ public class MyActorTests : IAsyncLifetime
     [Fact]
     public async Task Test()
     {
-        //Test
+        //Arrange
         var client = new HttpClient();
-        client.BaseAddress = new("http://localhost:4500");
+        client.BaseAddress = new(MyActorClientFactory.HostUrl);
 
-        var dataRequest = new SetDataRequest("user1", "once", "diez");
-
+        var dataRequest = new SetDataRequest("user1", "prop1", "prop2");
         var json = JsonConvert.SerializeObject(dataRequest);
         var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await client.PostAsync("/actor", httpContent);
+        //Act
+        var postResponse = await client.PostAsync("/actor", httpContent);
+        var getResponse = await client.GetAsync("/actor?user=user1");
 
+        //Assert
         using (new AssertionScope())
         {
-            response.Should().BeSuccessful();
-
-            response = await client.GetAsync("/actor?user=user1");
-            response.Should().BeSuccessful();
-            var content = await response.Content.ReadAsStringAsync();
-            _testOutputHelper.WriteLine(content);
+            postResponse.Should().BeSuccessful();
+            getResponse.Should().BeSuccessful();
+            
+            var getResponseContent = await getResponse.Content.ReadAsStringAsync();
+            _testOutputHelper.WriteLine($"Get response content: {getResponseContent}");
+            
+            JsonConvert.DeserializeObject<MyData>(getResponseContent).Should().Be(new MyData(dataRequest.PropertyA, dataRequest.PropertyB));
         }
     }
 }
