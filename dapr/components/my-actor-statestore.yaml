@@ -1,7 +1,7 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: score-local
+  name: my-actor-local
 spec:
   type: state.redis
   version: v1
