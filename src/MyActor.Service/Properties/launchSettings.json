@@ -1,0 +1,13 @@
+﻿{
+  "profiles": {
+    "MyActorService": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:5158",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DAPR_HTTP_PORT": "1501",
+        "DAPR_GRPC_PORT": "54201"
+      }
+    }
+  }
+}

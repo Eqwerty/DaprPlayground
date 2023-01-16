@@ -1,0 +1,1 @@
+dapr run --components-path ./dapr/components --app-id MyActorService --app-port 5158 --dapr-http-port 1501 --dapr-grpc-port 54201
