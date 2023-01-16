@@ -1,7 +1,6 @@
-﻿using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
+﻿using System.Text;
 using FluentAssertions;
+using FluentAssertions.Execution;
 using MyActor.Client.Requests;
 using MyActor.IntegrationTests.Factories;
 using MyActor.IntegrationTests.Redis;
@@ -44,18 +43,21 @@ public class MyActorTests //: IClassFixture<Manager>
         client.BaseAddress = new("http://localhost:4500");
 
         var dataRequest = new SetDataRequest("user1", "once", "diez");
-        
+
         var json = JsonConvert.SerializeObject(dataRequest);
         var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
-        
+
         var response = await client.PostAsync("/actor", httpContent);
 
-        response.Should().BeSuccessful();
-        
-        response = await client.GetAsync("/actor?user=user1");
-        response.Should().BeSuccessful();
-        var content = await response.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine(content);
+        using (new AssertionScope())
+        {
+            response.Should().BeSuccessful();
+
+            response = await client.GetAsync("/actor?user=user1");
+            response.Should().BeSuccessful();
+            var content = await response.Content.ReadAsStringAsync();
+            _testOutputHelper.WriteLine(content);
+        }
 
         //Dispose
         await RedisContainer.DisposeAsync();
