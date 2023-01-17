@@ -29,6 +29,11 @@ public class MyActorServiceFactory : WebApplicationFactory<IMyActorServiceMarker
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseUrls(_hostUrl);
+
+        builder.UseEnvironment("Tests");
+
+        builder.UseSetting("environmentVariables:daprHttpPort", "1501");
+        builder.UseSetting("environmentVariables:daprGrpcPort", "54201");
     }
 
     protected override IHost CreateHost(IHostBuilder builder)

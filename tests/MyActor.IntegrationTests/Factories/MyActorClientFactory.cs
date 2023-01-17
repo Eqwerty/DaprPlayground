@@ -29,6 +29,11 @@ public class MyActorClientFactory : WebApplicationFactory<IMyActorClientMarker>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseUrls(HostUrl);
+
+        builder.UseEnvironment("Tests");
+
+        builder.UseSetting("environmentVariables:daprHttpPort", "1500");
+        builder.UseSetting("environmentVariables:daprGrpcPort", "54200");
     }
 
     protected override IHost CreateHost(IHostBuilder builder)

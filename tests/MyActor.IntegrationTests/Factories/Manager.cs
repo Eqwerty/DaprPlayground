@@ -1,8 +1,7 @@
-using MyActor.IntegrationTests.Factories;
 using MyActor.IntegrationTests.Redis;
 using Xunit;
 
-namespace MyActor.IntegrationTests;
+namespace MyActor.IntegrationTests.Factories;
 
 public class Manager : IAsyncLifetime
 {
@@ -20,7 +19,7 @@ public class Manager : IAsyncLifetime
 
         var serviceFactory = new MyActorServiceFactory();
         serviceFactory.CreateClient();
-        
+
         await Task.Delay(3000);
     }
 
