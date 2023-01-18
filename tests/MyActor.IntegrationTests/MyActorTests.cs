@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text;
 using CliWrap;
+using CliWrap.EventStream;
 using Dapr.Client;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -15,6 +16,7 @@ using MyActor.Client.Requests;
 using MyActor.Interfaces;
 using MyActor.Service;
 using Newtonsoft.Json;
+using Nito.AsyncEx;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -26,12 +28,12 @@ public class MyActorTests
     private const int HostPort = 6381;
     private const int ContainerPort = 6379;
 
-    private const string ClientAppId = "MyActorClient";
+    private const string ClientAppId = "MyActorClient-tests";
     private const int ClientAppPort = 4500;
     private const int ClientDaprHttpPort = 1400;
     private const int ClientDaprGrpcPort = 44200;
-    
-    private const string ServiceAppId = "MyActorService";
+
+    private const string ServiceAppId = "MyActorService-tests";
     private const int ServiceAppPort = 4501;
     private const int ServiceDaprHttpPort = 1401;
     private const int ServiceDaprGrpcPort = 44201;
@@ -53,91 +55,134 @@ public class MyActorTests
     [Fact]
     public async Task MyActor_ShouldReturnOkResult_WhenDataIsSet()
     {
-        //Arrange
-        await DbContainer.StartAsync();
-
-        Cli.Wrap("dapr")
-            .WithArguments(
-                args => args
-                    .Add("run")
-                    .Add("--app-id").Add(ClientAppId)
-                    .Add("--app-port").Add(ClientAppPort)
-                    .Add("--dapr-http-port").Add(ClientDaprHttpPort)
-                    .Add("--dapr-grpc-port").Add(ClientDaprGrpcPort)
-                    .Add("--components-path").Add(ComponentsPath)
-            )
-            .ExecuteAsync();
-        
-        Cli.Wrap("dapr")
-            .WithArguments(
-                args => args
-                    .Add("run")
-                    .Add("--app-id").Add(ServiceAppId)
-                    .Add("--app-port").Add(ServiceAppPort)
-                    .Add("--dapr-http-port").Add(ServiceDaprHttpPort)
-                    .Add("--dapr-grpc-port").Add(ServiceDaprGrpcPort)
-                    .Add("--components-path").Add(ComponentsPath)
-            )
-            .ExecuteAsync();
-
-        var clientFactory = new ClientFactory();
-        clientFactory.CreateClient();
-        var clientDaprClient = clientFactory.Services.GetRequiredService<DaprClient>();
-        await clientDaprClient.WaitForSidecarAsync();
-
-        var serviceFactory = new ServiceFactory();
-        serviceFactory.CreateClient();
-
-        var user = "user1";
-        
-        //Act
-        var httpClient = new HttpClient();
-        httpClient.BaseAddress = new(ClientFactory.HostUrl);
-
-        var getResponse1 = await httpClient.GetAsync($"/actor?user={user}");
-        var contentGetResponse1 = await getResponse1.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine($"{nameof(contentGetResponse1)}: {contentGetResponse1}");
-
-        _testOutputHelper.WriteLine("");
-
-        var expectedData = new MyData("property1", "property2");
-        var request = new SetDataRequest(user, expectedData.PropertyA, expectedData.PropertyB);
-        var httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-        var postResponse = await httpClient.PostAsync("/actor", httpContent);
-        var postResponseContent = await postResponse.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine($"postResponseContent: {postResponseContent}");
-        
-        _testOutputHelper.WriteLine("");
-        
-        var getResponse2 = await httpClient.GetAsync($"/actor?user={user}");
-        var contentGetResponse2 = await getResponse2.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine($"{nameof(contentGetResponse2)}: {contentGetResponse2}");
-        
-        //Assert
-        using (new AssertionScope())
+        try
         {
-            getResponse1.Should().HaveStatusCode(HttpStatusCode.NotFound);
-            postResponse.Should().HaveStatusCode(HttpStatusCode.OK);
-            getResponse2.Should().HaveStatusCode(HttpStatusCode.OK);
+            //Arrange
+            await DbContainer.StartAsync();
 
-            var myData = JsonConvert.DeserializeObject<MyData>(contentGetResponse2);
-            myData.Should().BeEquivalentTo(expectedData);
-        }
+            var serviceCountdown = new AsyncCountdownEvent(1);
+            var serviceCommand = Cli.Wrap("dapr")
+                .WithArguments(
+                    args => args
+                        .Add("run")
+                        .Add("--app-id").Add(ServiceAppId)
+                        .Add("--app-port").Add(ServiceAppPort)
+                        .Add("--dapr-http-port").Add(ServiceDaprHttpPort)
+                        .Add("--dapr-grpc-port").Add(ServiceDaprGrpcPort)
+                        .Add("--components-path").Add(ComponentsPath)
+                );
+            
+            Task.Run(async () =>
+            {
+                await foreach (var commandEvent in serviceCommand.ListenAsync())
+                {
+                    switch (commandEvent)
+                    {
+                        case StandardOutputCommandEvent stdOut:
+                            if (stdOut.Text is "You're up and running! Dapr logs will appear here.")
+                            {
+                                serviceCountdown.Signal();
+                            }
+                            break;
+                    }
+                }
+            });
+            
+            await serviceCountdown.WaitAsync();
 
-        //Cleanup
-        await DbContainer.DisposeAsync();
-
-        await Cli.Wrap("dapr")
-            .WithArguments(
-                args => args
-                    .Add("stop").Add(ClientAppId)
-            ).ExecuteAsync();
+            var clientCountdown = new AsyncCountdownEvent(1);
+            var clientCommand = Cli.Wrap("dapr")
+                .WithArguments(
+                    args => args
+                        .Add("run")
+                        .Add("--app-id").Add(ClientAppId)
+                        .Add("--app-port").Add(ClientAppPort)
+                        .Add("--dapr-http-port").Add(ClientDaprHttpPort)
+                        .Add("--dapr-grpc-port").Add(ClientDaprGrpcPort)
+                        .Add("--components-path").Add(ComponentsPath)
+                );
+            
+            Task.Run(async () =>
+            {
+                await foreach (var commandEvent in clientCommand.ListenAsync())
+                {
+                    switch (commandEvent)
+                    {
+                        case StandardOutputCommandEvent stdOut:
+                            if (stdOut.Text is "You're up and running! Dapr logs will appear here.")
+                            {
+                                clientCountdown.Signal();
+                            }
+                            break;
+                    }
+                }
+            });
         
-        await Cli.Wrap("dapr")
-            .WithArguments(
-                args => args
-                    .Add("stop").Add(ServiceAppId)
-            ).ExecuteAsync();
+            await clientCountdown.WaitAsync();
+            
+            var clientFactory = new ClientFactory();
+            clientFactory.CreateClient();
+            var clientDaprClient = clientFactory.Services.GetRequiredService<DaprClient>();
+            await clientDaprClient.WaitForSidecarAsync();
+
+            var serviceFactory = new ServiceFactory();
+            serviceFactory.CreateClient();
+
+            var user = "user1";
+
+            await Task.Delay(4000);
+            
+            //Act
+            var httpClient = new HttpClient();
+            httpClient.BaseAddress = new(ClientFactory.HostUrl);
+            
+            var getResponse1 = await httpClient.GetAsync($"/actor?user={user}");
+            var contentGetResponse1 = await getResponse1.Content.ReadAsStringAsync();
+            _testOutputHelper.WriteLine($"{nameof(contentGetResponse1)}: {contentGetResponse1}");
+            
+            _testOutputHelper.WriteLine("");
+            
+            var expectedData = new MyData("property1", "property2");
+            var request = new SetDataRequest(user, expectedData.PropertyA, expectedData.PropertyB);
+            var httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+            var postResponse = await httpClient.PostAsync("/actor", httpContent);
+            var postResponseContent = await postResponse.Content.ReadAsStringAsync();
+            _testOutputHelper.WriteLine($"postResponseContent: {postResponseContent}");
+            
+            _testOutputHelper.WriteLine("");
+            
+            var getResponse2 = await httpClient.GetAsync($"/actor?user={user}");
+            var contentGetResponse2 = await getResponse2.Content.ReadAsStringAsync();
+            _testOutputHelper.WriteLine($"{nameof(contentGetResponse2)}: {contentGetResponse2}");
+            
+            //Assert
+            using (new AssertionScope())
+            {
+                getResponse1.Should().HaveStatusCode(HttpStatusCode.NotFound);
+                postResponse.Should().HaveStatusCode(HttpStatusCode.OK);
+                getResponse2.Should().HaveStatusCode(HttpStatusCode.OK);
+            
+                var myData = JsonConvert.DeserializeObject<MyData>(contentGetResponse2);
+                myData.Should().BeEquivalentTo(expectedData);
+            }
+        }
+        finally
+        {
+            //Cleanup
+            await DbContainer.DisposeAsync();
+
+            await Cli.Wrap("dapr")
+                .WithArguments(
+                    args => args
+                        .Add("stop").Add(ClientAppId)
+                ).ExecuteAsync();
+
+            await Cli.Wrap("dapr")
+                .WithArguments(
+                    args => args
+                        .Add("stop").Add(ServiceAppId)
+                ).ExecuteAsync();
+        }
     }
 
     private class ClientFactory : WebApplicationFactory<IMyActorClientMarker>
