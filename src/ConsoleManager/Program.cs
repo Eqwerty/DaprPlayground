@@ -10,7 +10,7 @@ await DaprManager.RunDaprAsync(tokenSource.Token);
 
 Console.WriteLine("Waiting...");
 
-for (var i = 0; i < 5; i++)
+for (var i = 0; i < 30; i++)
 {
     await Task.Delay(1000);
     Console.WriteLine(i + 1);
@@ -32,6 +32,7 @@ public static class DaprManager
                     .Add("--app-port").Add("1234")
                     .Add("--dapr-http-port").Add("5678")
                     .Add("--dapr-grpc-port").Add("9101")
+                    .Add("--app-health-check-path").Add("/healthz")
             );
 
         Task.Run(async () =>

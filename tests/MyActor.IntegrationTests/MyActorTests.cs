@@ -70,6 +70,7 @@ public class MyActorTests
                         .Add("--dapr-http-port").Add(ServiceDaprHttpPort)
                         .Add("--dapr-grpc-port").Add(ServiceDaprGrpcPort)
                         .Add("--components-path").Add(ComponentsPath)
+                        .Add("--app-health-check-path").Add("/healthz")
                 );
             
             Task.Run(async () =>
@@ -100,6 +101,7 @@ public class MyActorTests
                         .Add("--dapr-http-port").Add(ClientDaprHttpPort)
                         .Add("--dapr-grpc-port").Add(ClientDaprGrpcPort)
                         .Add("--components-path").Add(ComponentsPath)
+                        .Add("--app-health-check-path").Add("/healthz")
                 );
             
             Task.Run(async () =>
@@ -130,7 +132,7 @@ public class MyActorTests
 
             var user = "user1";
 
-            await Task.Delay(4000);
+            await Task.Delay(4_000);
             
             //Act
             var httpClient = new HttpClient();
