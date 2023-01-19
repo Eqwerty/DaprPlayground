@@ -1,30 +1,18 @@
 ﻿using System.Net;
 using System.Text;
-using CliWrap;
 using Dapr.Client;
 using FluentAssertions;
 using FluentAssertions.Execution;
-using Google.Protobuf;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
-using MyActor.Client;
 using MyActor.Client.Requests;
 using MyActor.IntegrationTests.Dapr;
-using MyActor.IntegrationTests.Factories;
 using MyActor.IntegrationTests.Redis;
 using MyActor.Interfaces;
-using MyActor.Logger;
-using MyActor.Logger.Services;
-using MyActor.Service;
 using Newtonsoft.Json;
-using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MyActor.IntegrationTests;
+namespace MyActor.IntegrationTests.Factories;
 
 public class MyActorTests
 {
@@ -79,7 +67,7 @@ public class MyActorTests
             var serviceDaprClient = serviceFactory.Services.GetRequiredService<DaprClient>();
             await serviceDaprClient.WaitForSidecarAsync();
 
-            var loggerFactory = new LoggerFactory();
+            var loggerFactory = new LoggerFactory(UtcNow);
             loggerFactory.CreateClient();
             var loggerDaprClient = loggerFactory.Services.GetRequiredService<DaprClient>();
             await loggerDaprClient.WaitForSidecarAsync();
@@ -141,102 +129,6 @@ public class MyActorTests
             await DaprHelper.StopAsync(Settings.Logger.AppId);
             await DaprHelper.StopAsync(Settings.Service.AppId);
             await DaprHelper.StopAsync(Settings.Client.AppId);
-        }
-    }
-
-    private class ClientFactory : WebApplicationFactory<IMyActorClientMarker>
-    {
-        public static readonly string HostUrl = $"http://localhost:{Settings.Client.AppPort}";
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.UseUrls(HostUrl);
-
-            builder.UseEnvironment("Tests");
-
-            builder.UseSetting("environmentVariables:daprHttpPort", Settings.Client.DaprHttpPort.ToString());
-            builder.UseSetting("environmentVariables:daprGrpcPort", Settings.Client.DaprGrpcPort.ToString());
-
-            builder.ConfigureServices(services => services.AddActors(options => options.HttpEndpoint = $"http://localhost:{Settings.Client.DaprHttpPort}"));
-        }
-
-        protected override IHost CreateHost(IHostBuilder builder)
-        {
-            var dummyHost = builder.Build();
-
-            builder.ConfigureWebHost(webHostBuilder => webHostBuilder.UseKestrel());
-
-            var host = builder.Build();
-            host.Start();
-
-            return dummyHost;
-        }
-    }
-
-    private class ServiceFactory : WebApplicationFactory<IMyActorServiceMarker>
-    {
-        public static readonly string HostUrl = $"http://localhost:{Settings.Service.AppPort}";
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.UseUrls(HostUrl);
-
-            builder.UseEnvironment("Tests");
-
-            builder.UseSetting("environmentVariables:daprHttpPort", Settings.Service.DaprHttpPort.ToString());
-            builder.UseSetting("environmentVariables:daprGrpcPort", Settings.Service.DaprGrpcPort.ToString());
-
-            builder.ConfigureServices(services => services.AddActors(options => options.HttpEndpoint = $"http://localhost:{Settings.Service.DaprHttpPort}"));
-        }
-
-        protected override IHost CreateHost(IHostBuilder builder)
-        {
-            var dummyHost = builder.Build();
-
-            builder.ConfigureWebHost(webHostBuilder => webHostBuilder.UseKestrel());
-
-            var host = builder.Build();
-            host.Start();
-
-            return dummyHost;
-        }
-    }
-
-    private class LoggerFactory : WebApplicationFactory<IMyActorLoggerMarker>
-    {
-        public static readonly string HostUrl = $"http://localhost:{Settings.Logger.AppPort}";
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.UseUrls(HostUrl);
-
-            builder.UseEnvironment("Tests");
-
-            builder.UseSetting("environmentVariables:daprHttpPort", Settings.Logger.DaprHttpPort.ToString());
-            builder.UseSetting("environmentVariables:daprGrpcPort", Settings.Logger.DaprGrpcPort.ToString());
-
-            builder.ConfigureServices(services =>
-            {
-                services.AddActors(options => options.HttpEndpoint = $"http://localhost:{Settings.Logger.DaprHttpPort}");
-
-                var systemClock = Substitute.For<ISystemClock>();
-                systemClock.UtcNow().Returns(UtcNow);
-
-                services.RemoveAll<ISystemClock>();
-                services.AddSingleton(systemClock);
-            });
-        }
-
-        protected override IHost CreateHost(IHostBuilder builder)
-        {
-            var dummyHost = builder.Build();
-
-            builder.ConfigureWebHost(webHostBuilder => webHostBuilder.UseKestrel());
-
-            var host = builder.Build();
-            host.Start();
-
-            return dummyHost;
         }
     }
 }
