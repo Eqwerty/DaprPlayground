@@ -3,8 +3,6 @@ using System.Text;
 using CliWrap;
 using CliWrap.EventStream;
 using Dapr.Client;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using Microsoft.AspNetCore.Hosting;
@@ -14,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using MyActor.Client;
 using MyActor.Client.Requests;
+using MyActor.IntegrationTests.Factories;
 using MyActor.IntegrationTests.Redis;
 using MyActor.Interfaces;
 using MyActor.Logger;
@@ -29,22 +28,6 @@ namespace MyActor.IntegrationTests;
 
 public class MyActorTests
 {
-    private const string ClientAppId = "MyActorClient-tests";
-    private const int ClientAppPort = 4500;
-    private const int ClientDaprHttpPort = 1400;
-    private const int ClientDaprGrpcPort = 44200;
-
-    private const string ServiceAppId = "MyActorService-tests";
-    private const int ServiceAppPort = 4501;
-    private const int ServiceDaprHttpPort = 1401;
-    private const int ServiceDaprGrpcPort = 44201;
-
-    private const string LoggerAppId = "MyActorLogger-tests";
-    private const int LoggerAppPort = 4502;
-    private const int LoggerDaprHttpPort = 1402;
-    private const int LoggerDaprGrpcPort = 44202;
-
-    private const string ComponentsPath = "../../../Dapr/Components";
     private static readonly DateTime UtcNow = DateTime.UtcNow;
 
     private readonly ITestOutputHelper _testOutputHelper;
@@ -67,11 +50,11 @@ public class MyActorTests
                 .WithArguments(
                     args => args
                         .Add("run")
-                        .Add("--app-id").Add(LoggerAppId)
-                        .Add("--app-port").Add(LoggerAppPort)
-                        .Add("--dapr-http-port").Add(LoggerDaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(LoggerDaprGrpcPort)
-                        .Add("--components-path").Add(ComponentsPath)
+                        .Add("--app-id").Add(Settings.Logger.AppId)
+                        .Add("--app-port").Add(Settings.Logger.AppPort)
+                        .Add("--dapr-http-port").Add(Settings.Logger.DaprHttpPort)
+                        .Add("--dapr-grpc-port").Add(Settings.Logger.DaprGrpcPort)
+                        .Add("--components-path").Add(Settings.Logger.ComponentsPath)
                 );
 
             Task.Run(async () =>
@@ -98,11 +81,11 @@ public class MyActorTests
                 .WithArguments(
                     args => args
                         .Add("run")
-                        .Add("--app-id").Add(ServiceAppId)
-                        .Add("--app-port").Add(ServiceAppPort)
-                        .Add("--dapr-http-port").Add(ServiceDaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(ServiceDaprGrpcPort)
-                        .Add("--components-path").Add(ComponentsPath)
+                        .Add("--app-id").Add(Settings.Service.AppId)
+                        .Add("--app-port").Add(Settings.Service.AppPort)
+                        .Add("--dapr-http-port").Add(Settings.Service.DaprHttpPort)
+                        .Add("--dapr-grpc-port").Add(Settings.Service.DaprGrpcPort)
+                        .Add("--components-path").Add(Settings.Service.ComponentsPath)
                 );
 
             Task.Run(async () =>
@@ -129,11 +112,11 @@ public class MyActorTests
                 .WithArguments(
                     args => args
                         .Add("run")
-                        .Add("--app-id").Add(ClientAppId)
-                        .Add("--app-port").Add(ClientAppPort)
-                        .Add("--dapr-http-port").Add(ClientDaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(ClientDaprGrpcPort)
-                        .Add("--components-path").Add(ComponentsPath)
+                        .Add("--app-id").Add(Settings.Client.AppId)
+                        .Add("--app-port").Add(Settings.Client.AppPort)
+                        .Add("--dapr-http-port").Add(Settings.Client.DaprHttpPort)
+                        .Add("--dapr-grpc-port").Add(Settings.Client.DaprGrpcPort)
+                        .Add("--components-path").Add(Settings.Client.ComponentsPath)
                 );
 
             Task.Run(async () =>
@@ -198,8 +181,8 @@ public class MyActorTests
             _testOutputHelper.WriteLine($"{nameof(contentGetResponse2)}: {contentGetResponse2}");
 
             var loggerHttpClient = new HttpClient();
-            loggerHttpClient.BaseAddress = new($"http://localhost:{LoggerDaprHttpPort}");
-            loggerHttpClient.DefaultRequestHeaders.Add("dapr-app-id", LoggerAppId);
+            loggerHttpClient.BaseAddress = new($"http://localhost:{Settings.Logger.DaprHttpPort}");
+            loggerHttpClient.DefaultRequestHeaders.Add("dapr-app-id", Settings.Logger.AppId);
 
             var loggerResponse = await loggerHttpClient.GetAsync("/v1.0/actors/LoggerActor/user1/state/activity");
             var log = await loggerResponse.Content.ReadAsStringAsync();
@@ -227,26 +210,26 @@ public class MyActorTests
             await Cli.Wrap("dapr")
                 .WithArguments(
                     args => args
-                        .Add("stop").Add(ClientAppId)
+                        .Add("stop").Add(Settings.Client.AppId)
                 ).ExecuteAsync();
 
             await Cli.Wrap("dapr")
                 .WithArguments(
                     args => args
-                        .Add("stop").Add(ServiceAppId)
+                        .Add("stop").Add(Settings.Service.AppId)
                 ).ExecuteAsync();
 
             await Cli.Wrap("dapr")
                 .WithArguments(
                     args => args
-                        .Add("stop").Add(LoggerAppId)
+                        .Add("stop").Add(Settings.Logger.AppId)
                 ).ExecuteAsync();
         }
     }
 
     private class ClientFactory : WebApplicationFactory<IMyActorClientMarker>
     {
-        public static readonly string HostUrl = $"http://localhost:{ClientAppPort}";
+        public static readonly string HostUrl = $"http://localhost:{Settings.Client.AppPort}";
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -254,10 +237,10 @@ public class MyActorTests
 
             builder.UseEnvironment("Tests");
 
-            builder.UseSetting("environmentVariables:daprHttpPort", ClientDaprHttpPort.ToString());
-            builder.UseSetting("environmentVariables:daprGrpcPort", ClientDaprGrpcPort.ToString());
+            builder.UseSetting("environmentVariables:daprHttpPort", Settings.Client.DaprHttpPort.ToString());
+            builder.UseSetting("environmentVariables:daprGrpcPort", Settings.Client.DaprGrpcPort.ToString());
 
-            builder.ConfigureServices(services => services.AddActors(options => options.HttpEndpoint = $"http://localhost:{LoggerDaprHttpPort}"));
+            builder.ConfigureServices(services => services.AddActors(options => options.HttpEndpoint = $"http://localhost:{Settings.Client.DaprHttpPort}"));
         }
 
         protected override IHost CreateHost(IHostBuilder builder)
@@ -275,7 +258,7 @@ public class MyActorTests
 
     private class ServiceFactory : WebApplicationFactory<IMyActorServiceMarker>
     {
-        public static readonly string HostUrl = $"http://localhost:{ServiceAppPort}";
+        public static readonly string HostUrl = $"http://localhost:{Settings.Service.AppPort}";
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -283,10 +266,10 @@ public class MyActorTests
 
             builder.UseEnvironment("Tests");
 
-            builder.UseSetting("environmentVariables:daprHttpPort", ServiceDaprHttpPort.ToString());
-            builder.UseSetting("environmentVariables:daprGrpcPort", ServiceDaprGrpcPort.ToString());
+            builder.UseSetting("environmentVariables:daprHttpPort", Settings.Service.DaprHttpPort.ToString());
+            builder.UseSetting("environmentVariables:daprGrpcPort", Settings.Service.DaprGrpcPort.ToString());
 
-            builder.ConfigureServices(services => services.AddActors(options => options.HttpEndpoint = $"http://localhost:{ServiceDaprHttpPort}"));
+            builder.ConfigureServices(services => services.AddActors(options => options.HttpEndpoint = $"http://localhost:{Settings.Service.DaprHttpPort}"));
         }
 
         protected override IHost CreateHost(IHostBuilder builder)
@@ -304,7 +287,7 @@ public class MyActorTests
 
     private class LoggerFactory : WebApplicationFactory<IMyActorLoggerMarker>
     {
-        public static readonly string HostUrl = $"http://localhost:{LoggerAppPort}";
+        public static readonly string HostUrl = $"http://localhost:{Settings.Logger.AppPort}";
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -312,12 +295,12 @@ public class MyActorTests
 
             builder.UseEnvironment("Tests");
 
-            builder.UseSetting("environmentVariables:daprHttpPort", LoggerDaprHttpPort.ToString());
-            builder.UseSetting("environmentVariables:daprGrpcPort", LoggerDaprGrpcPort.ToString());
+            builder.UseSetting("environmentVariables:daprHttpPort", Settings.Logger.DaprHttpPort.ToString());
+            builder.UseSetting("environmentVariables:daprGrpcPort", Settings.Logger.DaprGrpcPort.ToString());
 
             builder.ConfigureServices(services =>
             {
-                services.AddActors(options => options.HttpEndpoint = $"http://localhost:{LoggerDaprHttpPort}");
+                services.AddActors(options => options.HttpEndpoint = $"http://localhost:{Settings.Logger.DaprHttpPort}");
 
                 var systemClock = Substitute.For<ISystemClock>();
                 systemClock.UtcNow().Returns(UtcNow);
