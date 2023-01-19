@@ -25,11 +25,6 @@ public class ActorController : ControllerBase
             var actorType = "MyActor";
             var actorId = new ActorId(user);
             var proxy = _proxyFactory.CreateActorProxy<IMyActor>(actorId, actorType);
-            // var proxy = _proxyFactory.CreateActorProxy<IMyActor>(
-            //     actorId,
-            //     actorType,
-            //     new() { HttpEndpoint = "http://localhost:1400" }
-            // );
 
             var (myData, errorMessage) = await proxy.GetDataAsync(user);
 
@@ -59,11 +54,6 @@ public class ActorController : ControllerBase
             var actorType = "MyActor";
             var actorId = new ActorId(request.User);
             var proxy = _proxyFactory.CreateActorProxy<IMyActor>(actorId, actorType);
-            // var proxy = _proxyFactory.CreateActorProxy<IMyActor>(
-            //     actorId,
-            //     actorType,
-            //     new() { HttpEndpoint = "http://localhost:1400" }
-            // );
 
             var myData = new MyData(request.PropertyA, request.PropertyB);
             var errorMessage = await proxy.SetDataAsync(request.User, myData);

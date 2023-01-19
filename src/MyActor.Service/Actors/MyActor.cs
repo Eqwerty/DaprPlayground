@@ -17,11 +17,6 @@ public class MyActor : Actor, IMyActor
             await StateManager.SetStateAsync(StateName, data);
 
             var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
-            // var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(
-            //     new(user),
-            //     "LoggerActor",
-            //     new() { HttpEndpoint = $"http://localhost:1401" }
-            // );
 
             var errorMessage = await actor.LogActivityAsync(user);
 
@@ -40,11 +35,6 @@ public class MyActor : Actor, IMyActor
             var data = await StateManager.TryGetStateAsync<MyData>(StateName);
 
             var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
-            // var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(
-            //     new(user),
-            //     "LoggerActor",
-            //     new() { HttpEndpoint = $"http://localhost:1401" }
-            // );
 
             var errorMessage = await actor.LogActivityAsync(user);
 
