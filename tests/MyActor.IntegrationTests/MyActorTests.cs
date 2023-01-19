@@ -3,12 +3,13 @@ using System.Text;
 using FluentAssertions;
 using FluentAssertions.Execution;
 using MyActor.Client.Requests;
+using MyActor.IntegrationTests.Environment;
 using MyActor.Interfaces;
 using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace MyActor.IntegrationTests.Environment;
+namespace MyActor.IntegrationTests;
 
 public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
 {
@@ -24,13 +25,12 @@ public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
     {
         //Arrange
         var user = "user1";
-
         await Task.Delay(4_000);
 
-        //Act
         var httpClient = new HttpClient();
         httpClient.BaseAddress = new(ClientFactory.HostUrl);
 
+        //Act
         var getResponse1 = await httpClient.GetAsync($"/actor?user={user}");
         var contentGetResponse1 = await getResponse1.Content.ReadAsStringAsync();
         _testOutputHelper.WriteLine($"{nameof(contentGetResponse1)}: {contentGetResponse1}");

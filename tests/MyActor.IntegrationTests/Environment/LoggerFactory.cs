@@ -11,7 +11,7 @@ namespace MyActor.IntegrationTests.Environment;
 
 public class LoggerFactory : WebApplicationFactory<IMyActorLoggerMarker>
 {
-    public static readonly string HostUrl = $"http://localhost:{Settings.Logger.AppPort}";
+    private static readonly string HostUrl = $"http://localhost:{Settings.Logger.AppPort}";
     private readonly DateTime _utcNow;
 
     public LoggerFactory(DateTime utcNow)

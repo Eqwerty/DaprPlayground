@@ -9,9 +9,6 @@ namespace MyActor.IntegrationTests.Environment;
 public class IntegrationTestsEnvironment : IAsyncLifetime
 {
     public static readonly DateTime UtcNow = DateTime.UtcNow;
-    public LoggerFactory LoggerFactory { get; private set; }
-    public ClientFactory ClientFactory { get; private set; }
-    public ServiceFactory ServiceFactory { get; private set; }
 
     public async Task InitializeAsync()
     {
@@ -41,19 +38,19 @@ public class IntegrationTestsEnvironment : IAsyncLifetime
             Settings.Client.ComponentsPath
         );
 
-        ClientFactory = new();
-        ClientFactory.CreateClient();
-        var clientDaprClient = ClientFactory.Services.GetRequiredService<DaprClient>();
+        ClientFactory? clientFactory = new();
+        clientFactory.CreateClient();
+        var clientDaprClient = clientFactory.Services.GetRequiredService<DaprClient>();
         await clientDaprClient.WaitForSidecarAsync();
 
-        ServiceFactory = new();
-        ServiceFactory.CreateClient();
-        var serviceDaprClient = ServiceFactory.Services.GetRequiredService<DaprClient>();
+        ServiceFactory? serviceFactory = new();
+        serviceFactory.CreateClient();
+        var serviceDaprClient = serviceFactory.Services.GetRequiredService<DaprClient>();
         await serviceDaprClient.WaitForSidecarAsync();
 
-        LoggerFactory = new(UtcNow);
-        LoggerFactory.CreateClient();
-        var loggerDaprClient = LoggerFactory.Services.GetRequiredService<DaprClient>();
+        LoggerFactory? loggerFactory = new(UtcNow);
+        loggerFactory.CreateClient();
+        var loggerDaprClient = loggerFactory.Services.GetRequiredService<DaprClient>();
         await loggerDaprClient.WaitForSidecarAsync();
     }
 

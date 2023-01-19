@@ -8,7 +8,7 @@ namespace MyActor.IntegrationTests.Environment;
 
 public class ServiceFactory : WebApplicationFactory<IMyActorServiceMarker>
 {
-    public static readonly string HostUrl = $"http://localhost:{Settings.Service.AppPort}";
+    private static readonly string HostUrl = $"http://localhost:{Settings.Service.AppPort}";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
