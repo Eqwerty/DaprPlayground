@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyActor.Service;
 
-namespace MyActor.IntegrationTests.Factories;
+namespace MyActor.IntegrationTests.Environment;
 
 public class ServiceFactory : WebApplicationFactory<IMyActorServiceMarker>
 {

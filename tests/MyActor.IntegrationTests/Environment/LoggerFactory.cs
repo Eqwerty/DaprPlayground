@@ -7,7 +7,7 @@ using MyActor.Logger;
 using MyActor.Logger.Services;
 using NSubstitute;
 
-namespace MyActor.IntegrationTests.Factories;
+namespace MyActor.IntegrationTests.Environment;
 
 public class LoggerFactory : WebApplicationFactory<IMyActorLoggerMarker>
 {

@@ -1,4 +1,4 @@
-﻿namespace MyActor.IntegrationTests.Factories;
+﻿namespace MyActor.IntegrationTests.Environment;
 
 public static class Settings
 {

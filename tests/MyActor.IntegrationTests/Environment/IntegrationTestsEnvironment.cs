@@ -4,7 +4,7 @@ using MyActor.IntegrationTests.Dapr;
 using MyActor.IntegrationTests.Redis;
 using Xunit;
 
-namespace MyActor.IntegrationTests.Factories;
+namespace MyActor.IntegrationTests.Environment;
 
 public class IntegrationTestsEnvironment : IAsyncLifetime
 {

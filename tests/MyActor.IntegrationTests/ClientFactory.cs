@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyActor.Client;
-using MyActor.IntegrationTests.Factories;
+using MyActor.IntegrationTests.Environment;
 
 namespace MyActor.IntegrationTests;
 
