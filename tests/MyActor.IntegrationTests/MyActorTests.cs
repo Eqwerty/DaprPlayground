@@ -1,10 +1,10 @@
 ﻿using System.Net;
 using System.Text;
 using CliWrap;
-using CliWrap.EventStream;
 using Dapr.Client;
 using FluentAssertions;
 using FluentAssertions.Execution;
+using Google.Protobuf;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using MyActor.Client;
 using MyActor.Client.Requests;
+using MyActor.IntegrationTests.Dapr;
 using MyActor.IntegrationTests.Factories;
 using MyActor.IntegrationTests.Redis;
 using MyActor.Interfaces;
@@ -19,7 +20,6 @@ using MyActor.Logger;
 using MyActor.Logger.Services;
 using MyActor.Service;
 using Newtonsoft.Json;
-using Nito.AsyncEx;
 using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
@@ -45,98 +45,29 @@ public class MyActorTests
             //Arrange
             await RedisContainer.StartAsync();
 
-            var loggerCountdown = new AsyncCountdownEvent(1);
-            var loggerCommand = Cli.Wrap("dapr")
-                .WithArguments(
-                    args => args
-                        .Add("run")
-                        .Add("--app-id").Add(Settings.Logger.AppId)
-                        .Add("--app-port").Add(Settings.Logger.AppPort)
-                        .Add("--dapr-http-port").Add(Settings.Logger.DaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(Settings.Logger.DaprGrpcPort)
-                        .Add("--components-path").Add(Settings.Logger.ComponentsPath)
-                );
+            await DaprHelper.InitAsync(
+                Settings.Logger.AppId,
+                Settings.Logger.AppPort,
+                Settings.Logger.DaprHttpPort,
+                Settings.Logger.DaprGrpcPort,
+                Settings.Logger.ComponentsPath
+            );
 
-            Task.Run(async () =>
-            {
-                await foreach (var commandEvent in loggerCommand.ListenAsync())
-                {
-                    switch (commandEvent)
-                    {
-                        case StandardOutputCommandEvent stdOut:
-                            if (stdOut.Text is "You're up and running! Dapr logs will appear here.")
-                            {
-                                loggerCountdown.Signal();
-                            }
+            await DaprHelper.InitAsync(
+                Settings.Service.AppId,
+                Settings.Service.AppPort,
+                Settings.Service.DaprHttpPort,
+                Settings.Service.DaprGrpcPort,
+                Settings.Service.ComponentsPath
+            );
 
-                            break;
-                    }
-                }
-            });
-
-            await loggerCountdown.WaitAsync();
-
-            var serviceCountdown = new AsyncCountdownEvent(1);
-            var serviceCommand = Cli.Wrap("dapr")
-                .WithArguments(
-                    args => args
-                        .Add("run")
-                        .Add("--app-id").Add(Settings.Service.AppId)
-                        .Add("--app-port").Add(Settings.Service.AppPort)
-                        .Add("--dapr-http-port").Add(Settings.Service.DaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(Settings.Service.DaprGrpcPort)
-                        .Add("--components-path").Add(Settings.Service.ComponentsPath)
-                );
-
-            Task.Run(async () =>
-            {
-                await foreach (var commandEvent in serviceCommand.ListenAsync())
-                {
-                    switch (commandEvent)
-                    {
-                        case StandardOutputCommandEvent stdOut:
-                            if (stdOut.Text is "You're up and running! Dapr logs will appear here.")
-                            {
-                                serviceCountdown.Signal();
-                            }
-
-                            break;
-                    }
-                }
-            });
-
-            await serviceCountdown.WaitAsync();
-
-            var clientCountdown = new AsyncCountdownEvent(1);
-            var clientCommand = Cli.Wrap("dapr")
-                .WithArguments(
-                    args => args
-                        .Add("run")
-                        .Add("--app-id").Add(Settings.Client.AppId)
-                        .Add("--app-port").Add(Settings.Client.AppPort)
-                        .Add("--dapr-http-port").Add(Settings.Client.DaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(Settings.Client.DaprGrpcPort)
-                        .Add("--components-path").Add(Settings.Client.ComponentsPath)
-                );
-
-            Task.Run(async () =>
-            {
-                await foreach (var commandEvent in clientCommand.ListenAsync())
-                {
-                    switch (commandEvent)
-                    {
-                        case StandardOutputCommandEvent stdOut:
-                            if (stdOut.Text is "You're up and running! Dapr logs will appear here.")
-                            {
-                                clientCountdown.Signal();
-                            }
-
-                            break;
-                    }
-                }
-            });
-
-            await clientCountdown.WaitAsync();
+            await DaprHelper.InitAsync(
+                Settings.Client.AppId,
+                Settings.Client.AppPort,
+                Settings.Client.DaprHttpPort,
+                Settings.Client.DaprGrpcPort,
+                Settings.Client.ComponentsPath
+            );
 
             var clientFactory = new ClientFactory();
             clientFactory.CreateClient();
@@ -207,23 +138,9 @@ public class MyActorTests
             //Cleanup
             await RedisContainer.DisposeAsync();
 
-            await Cli.Wrap("dapr")
-                .WithArguments(
-                    args => args
-                        .Add("stop").Add(Settings.Client.AppId)
-                ).ExecuteAsync();
-
-            await Cli.Wrap("dapr")
-                .WithArguments(
-                    args => args
-                        .Add("stop").Add(Settings.Service.AppId)
-                ).ExecuteAsync();
-
-            await Cli.Wrap("dapr")
-                .WithArguments(
-                    args => args
-                        .Add("stop").Add(Settings.Logger.AppId)
-                ).ExecuteAsync();
+            await DaprHelper.StopAsync(Settings.Logger.AppId);
+            await DaprHelper.StopAsync(Settings.Service.AppId);
+            await DaprHelper.StopAsync(Settings.Client.AppId);
         }
     }
 
