@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using MyActor.Client;
 using MyActor.Client.Requests;
+using MyActor.IntegrationTests.Redis;
 using MyActor.Interfaces;
 using MyActor.Logger;
 using MyActor.Logger.Services;
@@ -28,10 +29,6 @@ namespace MyActor.IntegrationTests;
 
 public class MyActorTests
 {
-    private const string RedisImage = "redis/redis-stack";
-    private const int HostPort = 6381;
-    private const int ContainerPort = 6379;
-
     private const string ClientAppId = "MyActorClient-tests";
     private const int ClientAppPort = 4500;
     private const int ClientDaprHttpPort = 1400;
@@ -50,11 +47,6 @@ public class MyActorTests
     private const string ComponentsPath = "../../../Dapr/Components";
     private static readonly DateTime UtcNow = DateTime.UtcNow;
 
-    private static readonly TestcontainerDatabase DbContainer = new TestcontainersBuilder<RedisTestcontainer>()
-        .WithImage(RedisImage)
-        .WithPortBinding(HostPort, ContainerPort)
-        .Build();
-
     private readonly ITestOutputHelper _testOutputHelper;
 
     public MyActorTests(ITestOutputHelper testOutputHelper)
@@ -68,7 +60,7 @@ public class MyActorTests
         try
         {
             //Arrange
-            await DbContainer.StartAsync();
+            await RedisContainer.StartAsync();
 
             var loggerCountdown = new AsyncCountdownEvent(1);
             var loggerCommand = Cli.Wrap("dapr")
@@ -230,7 +222,7 @@ public class MyActorTests
         finally
         {
             //Cleanup
-            await DbContainer.DisposeAsync();
+            await RedisContainer.DisposeAsync();
 
             await Cli.Wrap("dapr")
                 .WithArguments(
