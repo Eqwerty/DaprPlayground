@@ -5,20 +5,42 @@ namespace MyActor.Service.Actors;
 
 public class MyActor : Actor, IMyActor
 {
+    private const string StateName = "userData";
+
     public MyActor(ActorHost host) : base(host)
     { }
-    
-    private const string StateName = "userTopics";
 
-    public async Task SetDataAsync(MyData data)
+    public async Task<string> SetDataAsync(string user, MyData data)
     {
-        await StateManager.SetStateAsync(StateName, data);
+        try
+        {
+            await StateManager.SetStateAsync(StateName, data);
+
+            var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
+            var errorMessage = await actor.LogActivityAsync(user);
+
+            return errorMessage;
+        }
+        catch (Exception e)
+        {
+            return e.Message;
+        }
     }
 
-    public async Task<MyData?> GetDataAsync()
+    public async Task<(MyData?, string)> GetDataAsync(string user)
     {
-        var data = await StateManager.TryGetStateAsync<MyData>(StateName);
+        try
+        {
+            var data = await StateManager.TryGetStateAsync<MyData>(StateName);
 
-        return data.HasValue ? data.Value : null;
+            var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
+            var errorMessage = await actor.LogActivityAsync(user);
+
+            return data.HasValue ? (data.Value, errorMessage) : (null, errorMessage);
+        }
+        catch (Exception e)
+        {
+            return (null, e.Message);
+        }
     }
 }

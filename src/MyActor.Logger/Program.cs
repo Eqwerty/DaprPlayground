@@ -1,7 +1,11 @@
+using MyActor.Logger.Actors;
+using MyActor.Logger.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDaprClient();
-builder.Services.AddActors(options => options.Actors.RegisterActor<MyActor.Service.Actors.MyActor>());
+builder.Services.AddActors(options => options.Actors.RegisterActor<LoggerActor>());
+builder.Services.AddSingleton<ISystemClock, SystemClock>();
 
 var app = builder.Build();
 

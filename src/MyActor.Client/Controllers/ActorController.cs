@@ -10,16 +10,28 @@ namespace MyActor.Client.Controllers;
 [Route("[controller]")]
 public class ActorController : ControllerBase
 {
+    private readonly IActorProxyFactory _proxyFactory;
+
+    public ActorController(IActorProxyFactory proxyFactory)
+    {
+        _proxyFactory = proxyFactory;
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetData([FromQuery] string user)
     {
         var actorType = "MyActor";
         var actorId = new ActorId(user);
-        var proxy = ActorProxy.Create<IMyActor>(actorId, actorType);
+        var proxy = _proxyFactory.CreateActorProxy<IMyActor>(actorId, actorType);
 
         try
         {
-            var myData = await proxy.GetDataAsync();
+            var (myData, errorMessage) = await proxy.GetDataAsync(user);
+
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
 
             if (myData is null)
             {
@@ -41,9 +53,21 @@ public class ActorController : ControllerBase
         var actorId = new ActorId(request.User);
         var proxy = ActorProxy.Create<IMyActor>(actorId, actorType);
 
-        var myData = new MyData(request.PropertyA, request.PropertyB);
-        await proxy.SetDataAsync(myData);
+        try
+        {
+            var myData = new MyData(request.PropertyA, request.PropertyB);
+            var errorMessage = await proxy.SetDataAsync(request.User, myData);
 
-        return Ok();
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
+
+            return Ok();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
     }
 }

@@ -1,0 +1,1 @@
+dapr run --components-path ./dapr/components --app-id MyActorLogger --app-port 5280 --dapr-http-port 1502 --dapr-grpc-port 54202

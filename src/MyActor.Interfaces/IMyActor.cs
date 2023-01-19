@@ -4,7 +4,7 @@ namespace MyActor.Interfaces;
 
 public interface IMyActor : IActor
 {
-    Task SetDataAsync(MyData data);
+    Task<string> SetDataAsync(string user, MyData data);
 
-    Task<MyData?> GetDataAsync();
+    Task<(MyData?, string)> GetDataAsync(string user);
 }
