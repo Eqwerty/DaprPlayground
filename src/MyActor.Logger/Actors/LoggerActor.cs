@@ -18,12 +18,15 @@ public class LoggerActor : Actor, ILoggerActor
     {
         try
         {
+            var host = Host;
+            var factory = ProxyFactory;
             await StateManager.SetStateAsync(StateName, $"Data updated at {_systemClock.UtcNow()}");
+
             return string.Empty;
         }
         catch (Exception e)
         {
-            return e.Message;
+            return $"LoggerError: {e.Message}";
         }
     }
 }

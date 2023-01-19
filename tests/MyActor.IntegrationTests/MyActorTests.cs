@@ -2,6 +2,7 @@
 using System.Text;
 using CliWrap;
 using CliWrap.EventStream;
+using Dapr.Actors.Client;
 using Dapr.Client;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
@@ -10,6 +11,7 @@ using FluentAssertions.Execution;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using MyActor.Client;
 using MyActor.Client.Requests;
@@ -187,16 +189,16 @@ public class MyActorTests
             _testOutputHelper.WriteLine($"{nameof(contentGetResponse1)}: {contentGetResponse1}");
 
             _testOutputHelper.WriteLine("");
-
+            
             var expectedData = new MyData("property1", "property2");
             var request = new SetDataRequest(user, expectedData.PropertyA, expectedData.PropertyB);
             var httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
             var postResponse = await httpClient.PostAsync("/actor", httpContent);
             var postResponseContent = await postResponse.Content.ReadAsStringAsync();
             _testOutputHelper.WriteLine($"postResponseContent: {postResponseContent}");
-
+            
             _testOutputHelper.WriteLine("");
-
+            
             var getResponse2 = await httpClient.GetAsync($"/actor?user={user}");
             var contentGetResponse2 = await getResponse2.Content.ReadAsStringAsync();
             _testOutputHelper.WriteLine($"{nameof(contentGetResponse2)}: {contentGetResponse2}");
@@ -207,7 +209,7 @@ public class MyActorTests
                 getResponse1.Should().HaveStatusCode(HttpStatusCode.NotFound);
                 postResponse.Should().HaveStatusCode(HttpStatusCode.OK);
                 getResponse2.Should().HaveStatusCode(HttpStatusCode.OK);
-
+                
                 var myData = JsonConvert.DeserializeObject<MyData>(contentGetResponse2);
                 myData.Should().BeEquivalentTo(expectedData);
             }
@@ -249,6 +251,24 @@ public class MyActorTests
 
             builder.UseSetting("environmentVariables:daprHttpPort", ClientDaprHttpPort.ToString());
             builder.UseSetting("environmentVariables:daprGrpcPort", ClientDaprGrpcPort.ToString());
+
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IActorProxyFactory>();
+                services.AddSingleton<IActorProxyFactory>(_ =>
+                {
+                    var options = new ActorProxyOptions
+                    {
+                        HttpEndpoint = $"http://localhost:{ClientDaprHttpPort}"
+                    };
+
+                    var factory = new ActorProxyFactory(options);
+
+                    return factory;
+                });
+                
+                services.AddActors(options => options.HttpEndpoint = $"http://localhost:{LoggerDaprHttpPort}");
+            });
         }
 
         protected override IHost CreateHost(IHostBuilder builder)
@@ -276,6 +296,24 @@ public class MyActorTests
 
             builder.UseSetting("environmentVariables:daprHttpPort", ServiceDaprHttpPort.ToString());
             builder.UseSetting("environmentVariables:daprGrpcPort", ServiceDaprGrpcPort.ToString());
+
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IActorProxyFactory>();
+                services.AddSingleton<IActorProxyFactory>(_ =>
+                {
+                    var options = new ActorProxyOptions
+                    {
+                        HttpEndpoint = $"http://localhost:{ServiceDaprHttpPort}"
+                    };
+
+                    var factory = new ActorProxyFactory(options);
+
+                    return factory;
+                });
+                
+                services.AddActors(options => options.HttpEndpoint = $"http://localhost:{ServiceDaprHttpPort}");
+            });
         }
 
         protected override IHost CreateHost(IHostBuilder builder)
@@ -303,6 +341,24 @@ public class MyActorTests
 
             builder.UseSetting("environmentVariables:daprHttpPort", LoggerDaprHttpPort.ToString());
             builder.UseSetting("environmentVariables:daprGrpcPort", LoggerDaprGrpcPort.ToString());
+
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IActorProxyFactory>();
+                services.AddSingleton<IActorProxyFactory>(_ =>
+                {
+                    var options = new ActorProxyOptions
+                    {
+                        HttpEndpoint = $"http://localhost:{LoggerDaprHttpPort}"
+                    };
+
+                    var factory = new ActorProxyFactory(options);
+
+                    return factory;
+                });
+                
+                services.AddActors(options => options.HttpEndpoint = $"http://localhost:{LoggerDaprHttpPort}");
+            });
         }
 
         protected override IHost CreateHost(IHostBuilder builder)

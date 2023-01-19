@@ -20,12 +20,17 @@ public class ActorController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetData([FromQuery] string user)
     {
-        var actorType = "MyActor";
-        var actorId = new ActorId(user);
-        var proxy = _proxyFactory.CreateActorProxy<IMyActor>(actorId, actorType);
-
         try
         {
+            var actorType = "MyActor";
+            var actorId = new ActorId(user);
+            var proxy = _proxyFactory.CreateActorProxy<IMyActor>(actorId, actorType);
+            // var proxy = _proxyFactory.CreateActorProxy<IMyActor>(
+            //     actorId,
+            //     actorType,
+            //     new() { HttpEndpoint = "http://localhost:1400" }
+            // );
+
             var (myData, errorMessage) = await proxy.GetDataAsync(user);
 
             if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -42,19 +47,24 @@ public class ActorController : ControllerBase
         }
         catch (Exception e)
         {
-            return BadRequest(e.Message);
+            return BadRequest($"ClientError: {e.Message}");
         }
     }
 
     [HttpPost]
     public async Task<IActionResult> SetData([FromBody] SetDataRequest request)
     {
-        var actorType = "MyActor";
-        var actorId = new ActorId(request.User);
-        var proxy = ActorProxy.Create<IMyActor>(actorId, actorType);
-
         try
         {
+            var actorType = "MyActor";
+            var actorId = new ActorId(request.User);
+            var proxy = _proxyFactory.CreateActorProxy<IMyActor>(actorId, actorType);
+            // var proxy = _proxyFactory.CreateActorProxy<IMyActor>(
+            //     actorId,
+            //     actorType,
+            //     new() { HttpEndpoint = "http://localhost:1400" }
+            // );
+
             var myData = new MyData(request.PropertyA, request.PropertyB);
             var errorMessage = await proxy.SetDataAsync(request.User, myData);
 
@@ -67,7 +77,7 @@ public class ActorController : ControllerBase
         }
         catch (Exception e)
         {
-            return BadRequest(e.Message);
+            return BadRequest($"ClientError: {e.Message}");
         }
     }
 }

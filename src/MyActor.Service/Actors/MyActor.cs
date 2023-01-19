@@ -17,13 +17,19 @@ public class MyActor : Actor, IMyActor
             await StateManager.SetStateAsync(StateName, data);
 
             var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
+            // var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(
+            //     new(user),
+            //     "LoggerActor",
+            //     new() { HttpEndpoint = $"http://localhost:1401" }
+            // );
+
             var errorMessage = await actor.LogActivityAsync(user);
 
             return errorMessage;
         }
         catch (Exception e)
         {
-            return e.Message;
+            return $"ServiceError: {e.Message}";
         }
     }
 
@@ -34,13 +40,19 @@ public class MyActor : Actor, IMyActor
             var data = await StateManager.TryGetStateAsync<MyData>(StateName);
 
             var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
+            // var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(
+            //     new(user),
+            //     "LoggerActor",
+            //     new() { HttpEndpoint = $"http://localhost:1401" }
+            // );
+
             var errorMessage = await actor.LogActivityAsync(user);
 
             return data.HasValue ? (data.Value, errorMessage) : (null, errorMessage);
         }
         catch (Exception e)
         {
-            return (null, e.Message);
+            return (null, $"ServiceError: {e.Message}");
         }
     }
 }

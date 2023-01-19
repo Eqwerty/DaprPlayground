@@ -8,7 +8,7 @@ public class NamespaceActorProxyFactory : IActorProxyFactory
     private readonly DaprConfig _config;
     private readonly IActorProxyFactory _defaultActorProxyFactory;
 
-    public NamespaceActorProxyFactory(IActorProxyFactory defaultActorProxyFactory, DaprConfig config)
+    public NamespaceActorProxyFactory(ActorProxyFactory defaultActorProxyFactory, DaprConfig config)
     {
         _defaultActorProxyFactory = defaultActorProxyFactory;
         _config = config;
