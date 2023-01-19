@@ -8,7 +8,7 @@ public class NamespaceActorProxyFactory : IActorProxyFactory
     private readonly DaprConfig _config;
     private readonly IActorProxyFactory _defaultActorProxyFactory;
 
-    public NamespaceActorProxyFactory(ActorProxyFactory defaultActorProxyFactory, DaprConfig config)
+    public NamespaceActorProxyFactory(IActorProxyFactory defaultActorProxyFactory, DaprConfig config)
     {
         _defaultActorProxyFactory = defaultActorProxyFactory;
         _config = config;
@@ -18,18 +18,21 @@ public class NamespaceActorProxyFactory : IActorProxyFactory
         where TActorInterface : IActor
     {
         var namespacedActorType = ActorNamespace.GetNamespacedActorType(_config, actorType);
+
         return _defaultActorProxyFactory.CreateActorProxy<TActorInterface>(actorId, namespacedActorType);
     }
 
     public object CreateActorProxy(ActorId actorId, Type actorInterfaceType, string actorType, ActorProxyOptions? options = null)
     {
         var namespacedActorType = ActorNamespace.GetNamespacedActorType(_config, actorType);
+
         return _defaultActorProxyFactory.CreateActorProxy(actorId, actorInterfaceType, namespacedActorType, options);
     }
 
     public ActorProxy Create(ActorId actorId, string actorType, ActorProxyOptions? options = null)
     {
         var namespacedActorType = ActorNamespace.GetNamespacedActorType(_config, actorType);
+
         return _defaultActorProxyFactory.Create(actorId, namespacedActorType, options);
     }
 }

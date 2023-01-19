@@ -18,7 +18,7 @@ public class MyActor : Actor, IMyActor
 
             var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
 
-            var errorMessage = await actor.LogActivityAsync(user);
+            var errorMessage = await actor.LogActivityAsync();
 
             return errorMessage;
         }
@@ -36,7 +36,7 @@ public class MyActor : Actor, IMyActor
 
             var actor = ProxyFactory.CreateActorProxy<ILoggerActor>(new(user), "LoggerActor");
 
-            var errorMessage = await actor.LogActivityAsync(user);
+            var errorMessage = await actor.LogActivityAsync();
 
             return data.HasValue ? (data.Value, errorMessage) : (null, errorMessage);
         }

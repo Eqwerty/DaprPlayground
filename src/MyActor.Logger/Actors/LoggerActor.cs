@@ -14,12 +14,10 @@ public class LoggerActor : Actor, ILoggerActor
         _systemClock = systemClock;
     }
 
-    public async Task<string> LogActivityAsync(string user)
+    public async Task<string> LogActivityAsync()
     {
         try
         {
-            var host = Host;
-            var factory = ProxyFactory;
             await StateManager.SetStateAsync(StateName, $"Data updated at {_systemClock.UtcNow()}");
 
             return string.Empty;

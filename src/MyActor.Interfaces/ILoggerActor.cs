@@ -4,5 +4,5 @@ namespace MyActor.Interfaces;
 
 public interface ILoggerActor : IActor
 {
-    Task<string> LogActivityAsync(string user);
+    Task<string> LogActivityAsync();
 }
