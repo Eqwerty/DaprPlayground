@@ -8,19 +8,16 @@ using MyActor.IntegrationTests.Environment;
 using MyActor.Interfaces;
 using Newtonsoft.Json;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace MyActor.IntegrationTests;
 
 public class MyActorTests : IClassFixture<TestsEnvironment>
 {
-    private readonly ITestOutputHelper _testOutputHelper;
     private readonly TestsEnvironment _testsEnvironment;
 
-    public MyActorTests(TestsEnvironment testsEnvironment, ITestOutputHelper testOutputHelper)
+    public MyActorTests(TestsEnvironment testsEnvironment)
     {
         _testsEnvironment = testsEnvironment;
-        _testOutputHelper = testOutputHelper;
     }
 
     [Fact]
@@ -62,7 +59,7 @@ public class MyActorTests : IClassFixture<TestsEnvironment>
 
         var myData = new MyData("PropertyA", "PropertyB");
         await proxy.SetDataAsync(user, myData);
-        
+
         var httpClient = _testsEnvironment.ClientFactory.CreateClient();
 
         //Act
