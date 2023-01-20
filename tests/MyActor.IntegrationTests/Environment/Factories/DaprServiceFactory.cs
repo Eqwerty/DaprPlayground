@@ -20,7 +20,7 @@ public abstract class DaprServiceFactory<TServiceMarker> : WebApplicationFactory
         _daprHttpEndpoint = $"http://localhost:{_settings.DaprHttpPort}";
     }
 
-    public string HostUrl => $"http://localhost:{_settings.AppPort}";
+    private string HostUrl => $"http://localhost:{_settings.AppPort}";
 
     public async Task InitializeSidecarAsync()
     {
