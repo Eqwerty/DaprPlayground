@@ -1,6 +1,6 @@
-﻿namespace MyActor.IntegrationTests.Environment;
+﻿namespace MyActor.IntegrationTests.Dapr;
 
-public class Settings
+public class DaprSettings
 {
     public const string ComponentsPath = "../../../Dapr/Components";
 
@@ -9,7 +9,7 @@ public class Settings
     public int DaprHttpPort { get; private init; }
     public int DaprGrpcPort { get; private init; }
 
-    public static Settings Client => new()
+    public static DaprSettings Client => new()
     {
         AppId = "MyActorClient-tests",
         AppPort = 4500,
@@ -17,7 +17,7 @@ public class Settings
         DaprGrpcPort = 44200
     };
 
-    public static Settings Service => new()
+    public static DaprSettings Service => new()
     {
         AppId = "MyActorService-tests",
         AppPort = 4501,
@@ -25,7 +25,7 @@ public class Settings
         DaprGrpcPort = 44201
     };
 
-    public static Settings Logger => new()
+    public static DaprSettings Logger => new()
     {
         AppId = "MyActorLogger-tests",
         AppPort = 4502,

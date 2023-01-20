@@ -11,16 +11,16 @@ public abstract class DaprServiceFactory<TServiceMarker> : WebApplicationFactory
 {
     private readonly string _daprHttpEndpoint;
     private readonly DaprInitializer _daprInitializer;
-    private readonly Settings _settings;
+    private readonly DaprSettings _daprSettings;
 
-    protected DaprServiceFactory(Settings settings)
+    protected DaprServiceFactory(DaprSettings daprSettings)
     {
-        _settings = settings;
-        _daprInitializer = new(_settings);
-        _daprHttpEndpoint = $"http://localhost:{_settings.DaprHttpPort}";
+        _daprSettings = daprSettings;
+        _daprInitializer = new(_daprSettings);
+        _daprHttpEndpoint = $"http://localhost:{_daprSettings.DaprHttpPort}";
     }
 
-    private string HostUrl => $"http://localhost:{_settings.AppPort}";
+    private string HostUrl => $"http://localhost:{_daprSettings.AppPort}";
 
     public async Task InitializeSidecarAsync()
     {
@@ -41,8 +41,8 @@ public abstract class DaprServiceFactory<TServiceMarker> : WebApplicationFactory
 
         builder.UseEnvironment("Tests");
 
-        builder.UseSetting("environmentVariables:daprHttpPort", _settings.DaprHttpPort.ToString());
-        builder.UseSetting("environmentVariables:daprGrpcPort", _settings.DaprGrpcPort.ToString());
+        builder.UseSetting("environmentVariables:daprHttpPort", _daprSettings.DaprHttpPort.ToString());
+        builder.UseSetting("environmentVariables:daprGrpcPort", _daprSettings.DaprGrpcPort.ToString());
 
         builder.ConfigureServices(services => services.AddActors(options => options.HttpEndpoint = _daprHttpEndpoint));
     }

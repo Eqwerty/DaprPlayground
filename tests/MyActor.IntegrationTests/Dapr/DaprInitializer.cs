@@ -10,11 +10,11 @@ public class DaprInitializer
     private const string UpAndRunningMessage = "You're up and running! Dapr logs will appear here.";
     private const int SecondsBeforeCancel = 10;
 
-    private readonly Settings _settings;
+    private readonly DaprSettings _daprSettings;
 
-    public DaprInitializer(Settings settings)
+    public DaprInitializer(DaprSettings daprSettings)
     {
-        _settings = settings;
+        _daprSettings = daprSettings;
     }
 
     public async Task InitAsync()
@@ -28,11 +28,11 @@ public class DaprInitializer
                 .WithArguments(
                     args => args
                         .Add("run")
-                        .Add("--app-id").Add(_settings.AppId)
-                        .Add("--app-port").Add(_settings.AppPort)
-                        .Add("--dapr-http-port").Add(_settings.DaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(_settings.DaprGrpcPort)
-                        .Add("--components-path").Add(Settings.ComponentsPath)
+                        .Add("--app-id").Add(_daprSettings.AppId)
+                        .Add("--app-port").Add(_daprSettings.AppPort)
+                        .Add("--dapr-http-port").Add(_daprSettings.DaprHttpPort)
+                        .Add("--dapr-grpc-port").Add(_daprSettings.DaprGrpcPort)
+                        .Add("--components-path").Add(DaprSettings.ComponentsPath)
                 );
 
             Task.Run(async () =>
@@ -56,7 +56,7 @@ public class DaprInitializer
         }
         catch (TaskCanceledException)
         {
-            throw new TaskCanceledException($"{_settings.AppId} sidecar took more than {SecondsBeforeCancel} to be ready");
+            throw new TaskCanceledException($"{_daprSettings.AppId} sidecar took more than {SecondsBeforeCancel} to be ready");
         }
     }
 
@@ -65,7 +65,7 @@ public class DaprInitializer
         await Cli.Wrap("dapr")
             .WithArguments(
                 args => args
-                    .Add("stop").Add(_settings.AppId)
+                    .Add("stop").Add(_daprSettings.AppId)
             ).ExecuteAsync();
     }
 }
