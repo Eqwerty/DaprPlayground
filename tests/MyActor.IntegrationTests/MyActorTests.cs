@@ -4,6 +4,7 @@ using FluentAssertions;
 using FluentAssertions.Execution;
 using MyActor.Client.Requests;
 using MyActor.IntegrationTests.Environment;
+using MyActor.IntegrationTests.Environment.Factories;
 using MyActor.Interfaces;
 using Newtonsoft.Json;
 using Xunit;
@@ -13,10 +14,12 @@ namespace MyActor.IntegrationTests;
 
 public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
 {
+    private readonly IntegrationTestsEnvironment _environment;
     private readonly ITestOutputHelper _testOutputHelper;
 
-    public MyActorTests(ITestOutputHelper testOutputHelper)
+    public MyActorTests(IntegrationTestsEnvironment environment, ITestOutputHelper testOutputHelper)
     {
+        _environment = environment;
         _testOutputHelper = testOutputHelper;
     }
 
@@ -27,7 +30,7 @@ public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
         var user = "user1";
 
         var httpClient = new HttpClient();
-        httpClient.BaseAddress = new(ClientFactory.HostUrl);
+        httpClient.BaseAddress = new(_environment.ClientFactory.HostUrl);
 
         //Act
         var getResponse1 = await httpClient.GetAsync($"/actor?user={user}");

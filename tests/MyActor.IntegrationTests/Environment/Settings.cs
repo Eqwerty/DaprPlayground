@@ -1,31 +1,37 @@
 ﻿namespace MyActor.IntegrationTests.Environment;
 
-public static class Settings
+public class Settings
 {
-    public static class Client
-    {
-        public const string AppId = "MyActorClient-tests";
-        public const int AppPort = 4500;
-        public const int DaprHttpPort = 1400;
-        public const int DaprGrpcPort = 44200;
-        public const string ComponentsPath = "../../../Dapr/Components";
-    }
+    public string AppId { get; private init; } = string.Empty;
+    public int AppPort { get; private init; }
+    public int DaprHttpPort { get; private init; }
+    public int DaprGrpcPort { get; private init; }
+    public string ComponentsPath { get; private init; } = string.Empty;
 
-    public static class Service
+    public static Settings Client => new()
     {
-        public const string AppId = "MyActorService-tests";
-        public const int AppPort = 4501;
-        public const int DaprHttpPort = 1401;
-        public const int DaprGrpcPort = 44201;
-        public const string ComponentsPath = "../../../Dapr/Components";
-    }
+        AppId = "MyActorClient-tests",
+        AppPort = 4500,
+        DaprHttpPort = 1400,
+        DaprGrpcPort = 44200,
+        ComponentsPath = "../../../Dapr/Components"
+    };
 
-    public static class Logger
+    public static Settings Service => new()
     {
-        public const string AppId = "MyActorLogger-tests";
-        public const int AppPort = 4502;
-        public const int DaprHttpPort = 1402;
-        public const int DaprGrpcPort = 44202;
-        public const string ComponentsPath = "../../../Dapr/Components";
-    }
+        AppId = "MyActorService-tests",
+        AppPort = 4501,
+        DaprHttpPort = 1401,
+        DaprGrpcPort = 44201,
+        ComponentsPath = "../../../Dapr/Components"
+    };
+
+    public static Settings Logger => new()
+    {
+        AppId = "MyActorLogger-tests",
+        AppPort = 4502,
+        DaprHttpPort = 1402,
+        DaprGrpcPort = 44202,
+        ComponentsPath = "../../../Dapr/Components"
+    };
 }
