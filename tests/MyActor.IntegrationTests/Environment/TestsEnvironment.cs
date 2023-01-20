@@ -4,7 +4,7 @@ using Xunit;
 
 namespace MyActor.IntegrationTests.Environment;
 
-public class IntegrationTestsEnvironment : IAsyncLifetime
+public class TestsEnvironment : IAsyncLifetime
 {
     public ClientFactory ClientFactory { get; } = new();
     public ServiceFactory ServiceFactory { get; } = new();

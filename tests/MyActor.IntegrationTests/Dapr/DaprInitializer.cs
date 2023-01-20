@@ -5,12 +5,19 @@ using Nito.AsyncEx;
 
 namespace MyActor.IntegrationTests.Dapr;
 
-public static class DaprHelper
+public class DaprInitializer
 {
     private const string UpAndRunningMessage = "You're up and running! Dapr logs will appear here.";
     private const int SecondsBeforeCancel = 10;
 
-    public static async Task InitAsync(Settings settings)
+    private readonly Settings _settings;
+
+    public DaprInitializer(Settings settings)
+    {
+        _settings = settings;
+    }
+
+    public async Task InitAsync()
     {
         try
         {
@@ -21,11 +28,11 @@ public static class DaprHelper
                 .WithArguments(
                     args => args
                         .Add("run")
-                        .Add("--app-id").Add(settings.AppId)
-                        .Add("--app-port").Add(settings.AppPort)
-                        .Add("--dapr-http-port").Add(settings.DaprHttpPort)
-                        .Add("--dapr-grpc-port").Add(settings.DaprGrpcPort)
-                        .Add("--components-path").Add(settings.ComponentsPath)
+                        .Add("--app-id").Add(_settings.AppId)
+                        .Add("--app-port").Add(_settings.AppPort)
+                        .Add("--dapr-http-port").Add(_settings.DaprHttpPort)
+                        .Add("--dapr-grpc-port").Add(_settings.DaprGrpcPort)
+                        .Add("--components-path").Add(Settings.ComponentsPath)
                 );
 
             Task.Run(async () =>
@@ -47,18 +54,18 @@ public static class DaprHelper
 
             await countdown.WaitAsync(tokenSource.Token);
         }
-        catch (TaskCanceledException _)
+        catch (TaskCanceledException)
         {
-            throw new TaskCanceledException($"{settings.AppId} sidecar took more than {SecondsBeforeCancel} to be ready");
+            throw new TaskCanceledException($"{_settings.AppId} sidecar took more than {SecondsBeforeCancel} to be ready");
         }
     }
 
-    public static async Task StopAsync(Settings settings)
+    public async Task StopAsync()
     {
         await Cli.Wrap("dapr")
             .WithArguments(
                 args => args
-                    .Add("stop").Add(settings.AppId)
+                    .Add("stop").Add(_settings.AppId)
             ).ExecuteAsync();
     }
 }

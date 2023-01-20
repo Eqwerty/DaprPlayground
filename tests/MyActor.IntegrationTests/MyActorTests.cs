@@ -12,14 +12,14 @@ using Xunit.Abstractions;
 
 namespace MyActor.IntegrationTests;
 
-public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
+public class MyActorTests : IClassFixture<TestsEnvironment>
 {
-    private readonly IntegrationTestsEnvironment _environment;
+    private readonly TestsEnvironment _testsEnvironment;
     private readonly ITestOutputHelper _testOutputHelper;
 
-    public MyActorTests(IntegrationTestsEnvironment environment, ITestOutputHelper testOutputHelper)
+    public MyActorTests(TestsEnvironment testsEnvironment, ITestOutputHelper testOutputHelper)
     {
-        _environment = environment;
+        _testsEnvironment = testsEnvironment;
         _testOutputHelper = testOutputHelper;
     }
 
@@ -30,7 +30,7 @@ public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
         var user = "user1";
 
         var httpClient = new HttpClient();
-        httpClient.BaseAddress = new(_environment.ClientFactory.HostUrl);
+        httpClient.BaseAddress = new(_testsEnvironment.ClientFactory.HostUrl);
 
         //Act
         var getResponse1 = await httpClient.GetAsync($"/actor?user={user}");
