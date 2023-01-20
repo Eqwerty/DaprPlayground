@@ -8,7 +8,9 @@ namespace MyActor.IntegrationTests.Environment;
 
 public class IntegrationTestsEnvironment : IAsyncLifetime
 {
-    public static readonly DateTime UtcNow = DateTime.UtcNow;
+    public ClientFactory ClientFactory { get; } = new();
+    public ServiceFactory ServiceFactory { get; } = new();
+    public LoggerFactory LoggerFactory { get; } = new();
 
     public async Task InitializeAsync()
     {
@@ -38,20 +40,16 @@ public class IntegrationTestsEnvironment : IAsyncLifetime
             Settings.Client.ComponentsPath
         );
 
-        ClientFactory? clientFactory = new();
-        clientFactory.CreateClient();
-        var clientDaprClient = clientFactory.Services.GetRequiredService<DaprClient>();
+        var clientDaprClient = ClientFactory.Services.GetRequiredService<DaprClient>();
         await clientDaprClient.WaitForSidecarAsync();
 
-        ServiceFactory? serviceFactory = new();
-        serviceFactory.CreateClient();
-        var serviceDaprClient = serviceFactory.Services.GetRequiredService<DaprClient>();
+        var serviceDaprClient = ServiceFactory.Services.GetRequiredService<DaprClient>();
         await serviceDaprClient.WaitForSidecarAsync();
 
-        LoggerFactory? loggerFactory = new(UtcNow);
-        loggerFactory.CreateClient();
-        var loggerDaprClient = loggerFactory.Services.GetRequiredService<DaprClient>();
+        var loggerDaprClient = LoggerFactory.Services.GetRequiredService<DaprClient>();
         await loggerDaprClient.WaitForSidecarAsync();
+
+        await Task.Delay(3_000);
     }
 
     public async Task DisposeAsync()

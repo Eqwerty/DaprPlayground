@@ -25,7 +25,6 @@ public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
     {
         //Arrange
         var user = "user1";
-        await Task.Delay(4_000);
 
         var httpClient = new HttpClient();
         httpClient.BaseAddress = new(ClientFactory.HostUrl);
@@ -69,7 +68,7 @@ public class MyActorTests : IClassFixture<IntegrationTestsEnvironment>
             var myData = JsonConvert.DeserializeObject<MyData>(contentGetResponse2);
             myData.Should().BeEquivalentTo(expectedData);
 
-            log.Should().Be($"\"Data updated at {IntegrationTestsEnvironment.UtcNow}\"");
+            log.Should().Be($"\"Data updated at {LoggerFactory.UtcNow}\"");
         }
     }
 }

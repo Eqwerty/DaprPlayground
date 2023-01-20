@@ -12,12 +12,7 @@ namespace MyActor.IntegrationTests.Environment;
 public class LoggerFactory : WebApplicationFactory<IMyActorLoggerMarker>
 {
     private static readonly string HostUrl = $"http://localhost:{Settings.Logger.AppPort}";
-    private readonly DateTime _utcNow;
-
-    public LoggerFactory(DateTime utcNow)
-    {
-        _utcNow = utcNow;
-    }
+    public static readonly DateTime UtcNow = DateTime.UtcNow;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -33,7 +28,7 @@ public class LoggerFactory : WebApplicationFactory<IMyActorLoggerMarker>
             services.AddActors(options => options.HttpEndpoint = $"http://localhost:{Settings.Logger.DaprHttpPort}");
 
             var systemClock = Substitute.For<ISystemClock>();
-            systemClock.UtcNow().Returns(_utcNow);
+            systemClock.UtcNow().ReturnsForAnyArgs(UtcNow);
 
             services.RemoveAll<ISystemClock>();
             services.AddSingleton(systemClock);
