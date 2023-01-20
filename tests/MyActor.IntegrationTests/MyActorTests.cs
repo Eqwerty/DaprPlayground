@@ -1,10 +1,10 @@
 ﻿using System.Net;
 using System.Text;
+using Dapr.Actors.Client;
 using FluentAssertions;
-using FluentAssertions.Execution;
+using Microsoft.Extensions.DependencyInjection;
 using MyActor.Client.Requests;
 using MyActor.IntegrationTests.Environment;
-using MyActor.IntegrationTests.Environment.Factories;
 using MyActor.Interfaces;
 using Newtonsoft.Json;
 using Xunit;
@@ -14,8 +14,8 @@ namespace MyActor.IntegrationTests;
 
 public class MyActorTests : IClassFixture<TestsEnvironment>
 {
-    private readonly TestsEnvironment _testsEnvironment;
     private readonly ITestOutputHelper _testOutputHelper;
+    private readonly TestsEnvironment _testsEnvironment;
 
     public MyActorTests(TestsEnvironment testsEnvironment, ITestOutputHelper testOutputHelper)
     {
@@ -24,54 +24,54 @@ public class MyActorTests : IClassFixture<TestsEnvironment>
     }
 
     [Fact]
-    public async Task MyActor_ShouldReturnOkResult_WhenDataIsSet()
+    public async Task MyActorService_WhenThereAreNoDataStored_ShouldReturnNotFoundResponse()
     {
         //Arrange
-        var user = "user1";
-
-        var httpClient = new HttpClient();
-        httpClient.BaseAddress = new(_testsEnvironment.ClientFactory.HostUrl);
+        var httpClient = _testsEnvironment.ClientFactory.CreateClient();
 
         //Act
-        var getResponse1 = await httpClient.GetAsync($"/actor?user={user}");
-        var contentGetResponse1 = await getResponse1.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine($"{nameof(contentGetResponse1)}: {contentGetResponse1}");
-
-        _testOutputHelper.WriteLine("");
-
-        var expectedData = new MyData("property1", "property2");
-        var request = new SetDataRequest(user, expectedData.PropertyA, expectedData.PropertyB);
-        var httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
-        var postResponse = await httpClient.PostAsync("/actor", httpContent);
-        var postResponseContent = await postResponse.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine($"postResponseContent: {postResponseContent}");
-
-        _testOutputHelper.WriteLine("");
-
-        var getResponse2 = await httpClient.GetAsync($"/actor?user={user}");
-        var contentGetResponse2 = await getResponse2.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine($"{nameof(contentGetResponse2)}: {contentGetResponse2}");
-
-        var loggerHttpClient = new HttpClient();
-        loggerHttpClient.BaseAddress = new($"http://localhost:{Settings.Logger.DaprHttpPort}");
-        loggerHttpClient.DefaultRequestHeaders.Add("dapr-app-id", Settings.Logger.AppId);
-
-        var loggerResponse = await loggerHttpClient.GetAsync("/v1.0/actors/LoggerActor/user1/state/activity");
-        var log = await loggerResponse.Content.ReadAsStringAsync();
-        _testOutputHelper.WriteLine("");
-        _testOutputHelper.WriteLine($"log: {log}");
+        var response = await httpClient.GetAsync("/actor?user=username");
 
         //Assert
-        using (new AssertionScope())
-        {
-            getResponse1.Should().HaveStatusCode(HttpStatusCode.NotFound);
-            postResponse.Should().HaveStatusCode(HttpStatusCode.OK);
-            getResponse2.Should().HaveStatusCode(HttpStatusCode.OK);
+        response.Should().HaveStatusCode(HttpStatusCode.NotFound);
+    }
 
-            var myData = JsonConvert.DeserializeObject<MyData>(contentGetResponse2);
-            myData.Should().BeEquivalentTo(expectedData);
+    [Fact]
+    public async Task MyActorService_WhenSettingData_ShouldReturnOkResult()
+    {
+        //Arrange
+        var httpClient = _testsEnvironment.ClientFactory.CreateClient();
 
-            log.Should().Be($"\"Data updated at {LoggerFactory.UtcNow}\"");
-        }
+        //Act
+        var request = new SetDataRequest("username", "PropertyA", "PropertyB");
+        var httpContent = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync("/actor", httpContent);
+
+        //Assert
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task MyActorService_WhenThereIsDataStoredForAUser_ShouldReturnDataAndOkResult()
+    {
+        //Arrange
+        var proxyFactory = _testsEnvironment.ClientFactory.Services.GetRequiredService<IActorProxyFactory>();
+
+        var user = "username";
+        var proxy = proxyFactory.CreateActorProxy<IMyActor>(new(user), "MyActor");
+
+        var myData = new MyData("PropertyA", "PropertyB");
+        await proxy.SetDataAsync(user, myData);
+        
+        var httpClient = _testsEnvironment.ClientFactory.CreateClient();
+
+        //Act
+        var response = await httpClient.GetAsync($"/actor?user={user}");
+        var content = await response.Content.ReadAsStringAsync();
+
+        //Assert
+        response.Should().HaveStatusCode(HttpStatusCode.OK);
+        var myDataRetrieved = JsonConvert.DeserializeObject<MyData>(content);
+        myDataRetrieved.Should().BeEquivalentTo(myData);
     }
 }
