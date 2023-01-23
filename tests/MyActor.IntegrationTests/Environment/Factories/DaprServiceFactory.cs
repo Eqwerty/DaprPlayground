@@ -10,13 +10,13 @@ namespace MyActor.IntegrationTests.Environment.Factories;
 public abstract class DaprServiceFactory<TServiceMarker> : WebApplicationFactory<TServiceMarker> where TServiceMarker : class
 {
     private readonly string _daprHttpEndpoint;
-    private readonly DaprInitializer _daprInitializer;
+    private readonly DaprManager _daprManager;
     private readonly DaprSettings _daprSettings;
 
     protected DaprServiceFactory(DaprSettings daprSettings)
     {
         _daprSettings = daprSettings;
-        _daprInitializer = new(_daprSettings);
+        _daprManager = new(_daprSettings);
         _daprHttpEndpoint = $"http://localhost:{_daprSettings.DaprHttpPort}";
     }
 
@@ -24,7 +24,7 @@ public abstract class DaprServiceFactory<TServiceMarker> : WebApplicationFactory
 
     public async Task InitializeSidecarAsync()
     {
-        await _daprInitializer.InitAsync();
+        await _daprManager.InitAsync();
 
         var client = Services.GetRequiredService<DaprClient>();
         await client.WaitForSidecarAsync();
@@ -32,7 +32,7 @@ public abstract class DaprServiceFactory<TServiceMarker> : WebApplicationFactory
 
     public async Task StopSidecarAsync()
     {
-        await _daprInitializer.StopAsync();
+        await _daprManager.StopAsync();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

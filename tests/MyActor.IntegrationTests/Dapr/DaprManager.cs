@@ -1,18 +1,17 @@
 ﻿using CliWrap;
 using CliWrap.EventStream;
-using MyActor.IntegrationTests.Environment;
 using Nito.AsyncEx;
 
 namespace MyActor.IntegrationTests.Dapr;
 
-public class DaprInitializer
+public class DaprManager
 {
     private const string UpAndRunningMessage = "You're up and running! Dapr logs will appear here.";
     private const int SecondsBeforeCancel = 10;
 
     private readonly DaprSettings _daprSettings;
 
-    public DaprInitializer(DaprSettings daprSettings)
+    public DaprManager(DaprSettings daprSettings)
     {
         _daprSettings = daprSettings;
     }
